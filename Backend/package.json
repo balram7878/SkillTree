@@ -1,0 +1,30 @@
+{
+  "name": "skill-tree",
+  "version": "1.0.0",
+  "description": "AI driven platform for students and tech professional to boost their skills and get a direction in their career",
+  "homepage": "https://github.com/balram7878/SkillTree#readme",
+  "bugs": {
+    "url": "https://github.com/balram7878/SkillTree/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/balram7878/SkillTree.git"
+  },
+  "license": "ISC",
+  "author": "Balram Meena",
+  "type": "commonjs",
+  "main": "app.js",
+  "scripts": {
+    "start": "node app.js"
+  },
+  "dependencies": {
+    "bcrypt": "^6.0.0",
+    "cookie-parser": "^1.4.7",
+    "cors": "^2.8.6",
+    "dotenv": "^17.3.1",
+    "express": "^5.2.1",
+    "jsonwebtoken": "^9.0.3",
+    "mongoose": "^9.2.4",
+    "redis": "^5.11.0"
+  }
+}
