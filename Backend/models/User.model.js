@@ -13,25 +13,45 @@ const userSchema = new mongoose.Schema(
       minLength: 3,
       maxLength: 20,
     },
+    username: {
+      type: String,
+      required: true,
+      unique: true,
+      trim: true,
+      minLength: 3,
+      maxLength: 30,
+    },
     email: {
       type: String,
       required: true,
       unique: true,
       lowercase: true,
+      trim: true,
     },
     passwordHash: {
       type: String,
-      minLength: 8,
       required: true,
-    },
-    isEmailVerified: {
-      type: Boolean,
-      default: false,
     },
     authProvider: {
       type: String,
       enum: ["local", "google"],
       default: "local",
+    },
+    isEmailVerified: {
+      type: Boolean,
+      default: false,
+    },
+    emailVerificationToken: {
+      type: String,
+    },
+    emailVerificationExpires: {
+      type: Date,
+    },
+    passwordResetToken: {
+      type: String,
+    },
+    passwordResetExpires: {
+      type: Date,
     },
     role: {
       type: String,
@@ -41,24 +61,16 @@ const userSchema = new mongoose.Schema(
     dateOfBirth: {
       type: Date,
     },
-
   },
-  { timestamps: true },
+  { timestamps: true }
 );
 
 userSchema.statics.generatePasswordHash = async function (password) {
-  try {
-    return await bcrypt.hash(password, 10);
-  } catch (err) {
-    throw err;
-  }
+  return bcrypt.hash(password, 12);
 };
+
 userSchema.methods.comparePassword = async function (password) {
-  try {
-    return await bcrypt.compare(password, this.passwordHash);
-  } catch (err) {
-    throw err;
-  }
+  return bcrypt.compare(password, this.passwordHash);
 };
 
 const User = mongoose.model("User", userSchema);
