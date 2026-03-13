@@ -1,52 +1,64 @@
 const crypto = require("crypto");
 const jwt = require("jsonwebtoken");
-const User = require("../models/User.model");
+const User = require("../../models/User.model");
 const {
   sendVerificationEmail,
   sendPasswordResetEmail,
-} = require("../utils/emailService");
+} = require("../../utils/emailService");
+const {
+  validateName,
+  validateEmail,
+  validatePassword,
+} = require("../../utils/validators");
 
 const generateToken = () => crypto.randomBytes(32).toString("hex");
 
 const generateJWT = (userId) => {
   return jwt.sign({ id: userId }, process.env.JWT_SECRET, {
-    expiresIn: process.env.JWT_EXPIRES_IN || "7d",
+    expiresIn: process.env.JWT_EXPIRES_IN || "1d",
   });
 };
 
 // POST /api/auth/signup
 const signup = async (req, res) => {
   try {
-    const { name, username, email, password } = req.body;
+    const { name, email, password } = req.body;
 
-    if (!name || !username || !email || !password) {
+    if (!name || !email || !password) {
       return res.status(400).json({ message: "All fields are required" });
     }
-    if (password.length < 8) {
-      return res
-        .status(400)
-        .json({ message: "Password must be at least 8 characters" });
+
+    const nameValidation = validateName(name);
+    if (!nameValidation.isValid) {
+      return res.status(400).json({ message: nameValidation.message });
+    }
+
+    const emailValidation = validateEmail(email);
+    if (!emailValidation.isValid) {
+      return res.status(400).json({ message: emailValidation.message });
+    }
+
+    const passwordValidation = validatePassword(password);
+
+    if (!passwordValidation.isValid) {
+      return res.status(400).json({ message: passwordValidation.message });
     }
 
     const existingUser = await User.findOne({
-      $or: [{ email: email.toLowerCase() }, { username }],
+      email: emailValidation.normalized,
     });
+
     if (existingUser) {
-      const field =
-        existingUser.email === email.toLowerCase() ? "Email" : "Username";
-      return res.status(409).json({ message: `${field} already exists` });
+      return res.status(409).json({ message: "Email already exists" });
     }
 
     const passwordHash = await User.generatePasswordHash(password);
     const emailVerificationToken = generateToken();
-    const emailVerificationExpires = new Date(
-      Date.now() + 24 * 60 * 60 * 1000
-    ); // 24 hours
+    const emailVerificationExpires = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
 
     const user = await User.create({
-      name,
-      username,
-      email,
+      name: nameValidation.normalized,
+      email: emailValidation.normalized,
       passwordHash,
       emailVerificationToken,
       emailVerificationExpires,
@@ -60,7 +72,6 @@ const signup = async (req, res) => {
       user: {
         id: user._id,
         name: user.name,
-        username: user.username,
         email: user.email,
       },
     });
@@ -81,7 +92,12 @@ const login = async (req, res) => {
         .json({ message: "Email and password are required" });
     }
 
-    const user = await User.findOne({ email: email.toLowerCase() });
+    const emailValidation = validateEmail(email);
+    if (!emailValidation.isValid) {
+      return res.status(400).json({ message: emailValidation.message });
+    }
+
+    const user = await User.findOne({ email: emailValidation.normalized });
     if (!user) {
       return res.status(401).json({ message: "Invalid email or password" });
     }
@@ -94,6 +110,12 @@ const login = async (req, res) => {
     if (!user.isEmailVerified) {
       return res.status(403).json({
         message: "Please verify your email before logging in",
+      });
+    }
+
+    if (!user.username) {
+      return res.status(403).json({
+        message: "Please choose a username before logging in",
       });
     }
 
@@ -123,7 +145,9 @@ const verifyEmail = async (req, res) => {
     const { token } = req.query;
 
     if (!token) {
-      return res.status(400).json({ message: "Verification token is required" });
+      return res
+        .status(400)
+        .json({ message: "Verification token is required" });
     }
 
     const user = await User.findOne({
@@ -158,8 +182,13 @@ const forgotPassword = async (req, res) => {
       return res.status(400).json({ message: "Email is required" });
     }
 
+    const emailValidation = validateEmail(email);
+    if (!emailValidation.isValid) {
+      return res.status(400).json({ message: emailValidation.message });
+    }
+
     // Always return success to prevent email enumeration
-    const user = await User.findOne({ email: email.toLowerCase() });
+    const user = await User.findOne({ email: emailValidation.normalized });
     if (!user) {
       return res.json({
         message:
@@ -169,7 +198,7 @@ const forgotPassword = async (req, res) => {
 
     const resetToken = generateToken();
     user.passwordResetToken = resetToken;
-    user.passwordResetExpires = new Date(Date.now() + 60 * 60 * 1000); // 1 hour
+    user.passwordResetExpires = new Date(Date.now() + 10 * 60 * 1000); // 10 hour
     await user.save();
 
     await sendPasswordResetEmail(user.email, resetToken);
@@ -187,17 +216,17 @@ const forgotPassword = async (req, res) => {
 // POST /api/auth/reset-password
 const resetPassword = async (req, res) => {
   try {
-    const { token, password } = req.body;
+    const { token } = req.query;
+    const { password } = req.body;
 
     if (!token || !password) {
       return res
         .status(400)
         .json({ message: "Token and new password are required" });
     }
-    if (password.length < 8) {
-      return res
-        .status(400)
-        .json({ message: "Password must be at least 8 characters" });
+    const passwordValidation = validatePassword(password);
+    if (!passwordValidation.isValid) {
+      return res.status(400).json({ message: passwordValidation.message });
     }
 
     const user = await User.findOne({
