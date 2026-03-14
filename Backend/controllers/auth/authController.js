@@ -98,6 +98,7 @@ const login = async (req, res) => {
     }
 
     const user = await User.findOne({ email: emailValidation.normalized });
+
     if (!user) {
       return res.status(401).json({ message: "Invalid email or password" });
     }
@@ -108,22 +109,43 @@ const login = async (req, res) => {
     }
 
     if (!user.isEmailVerified) {
-      return res.status(403).json({
-        message: "Please verify your email before logging in",
-      });
-    }
+      if (
+        !user.emailVerificationToken ||
+        user.emailVerificationExpires < Date.now()
+      ) {
+        const emailVerificationToken = generateToken();
+        const emailVerificationExpires = new Date(Date.now() + 10 * 60 * 1000);
 
-    if (!user.username) {
-      return res.status(403).json({
-        message: "Please choose a username before logging in",
+        user.emailVerificationToken = emailVerificationToken;
+        user.emailVerificationExpires = emailVerificationExpires;
+        await user.save();
+
+        await sendVerificationEmail(user.email, emailVerificationToken);
+      }
+
+      await sendVerificationEmail(user.email, user.emailVerificationToken);
+
+      return res.json({
+        nextStep: "VERIFY_EMAIL",
+        email: user.email,
       });
     }
+    // if (!user.username) {
+    //   return res.json({
+    //     nextStep: "CHOOSE_USERNAME",
+    //   });
+    // }
 
     const token = generateJWT(user._id);
 
+    res.cookie("token", token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      maxAge: 24 * 60 * 60 * 1000, // 1 day
+    });
+
     res.json({
       message: "Login successful",
-      token,
       user: {
         id: user._id,
         name: user.name,
@@ -196,12 +218,15 @@ const forgotPassword = async (req, res) => {
       });
     }
 
-    const resetToken = generateToken();
-    user.passwordResetToken = resetToken;
-    user.passwordResetExpires = new Date(Date.now() + 10 * 60 * 1000); // 10 hour
-    await user.save();
-
-    await sendPasswordResetEmail(user.email, resetToken);
+    if (!user.passwordResetToken || user.passwordResetExpires < Date.now()) {
+      const resetToken = generateToken();
+      user.passwordResetToken = resetToken;
+      user.passwordResetExpires = new Date(Date.now() + 10 * 60 * 1000);
+      await user.save();
+      await sendPasswordResetEmail(user.email, resetToken);
+    } else {
+      await sendPasswordResetEmail(user.email, user.passwordResetToken);
+    }
 
     res.json({
       message:
