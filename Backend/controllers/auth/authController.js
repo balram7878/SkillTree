@@ -9,7 +9,7 @@ const {
   validateName,
   validateEmail,
   validatePassword,
-} = require("../../utils/validators");
+} = require("../../validators/validators");
 
 const generateToken = () => crypto.randomBytes(32).toString("hex");
 

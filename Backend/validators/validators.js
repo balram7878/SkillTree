@@ -54,6 +54,8 @@ const validateEmail = (email) => {
 
   const [localPart, domain] = normalized.split("@");
 
+  
+
   if (!localPart || !domain || localPart.length > 64) {
     return { isValid: false, message: "Enter a valid email address" };
   }
