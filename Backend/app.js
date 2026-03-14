@@ -4,6 +4,7 @@ const cors = require("cors");
 const cookieParser = require("cookie-parser");
 const connectDB = require("./config/db");
 const authRoutes = require("./routes/auth.routes");
+require("./jobs/cleanupUnverifiedUsers");
 
 const app = express();
 
@@ -34,5 +35,3 @@ connectDB()
     console.error("Failed to connect to MongoDB:", err);
     process.exit(1);
   });
-
-module.exports = app;
