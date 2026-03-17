@@ -18,6 +18,7 @@ const userSchema = new mongoose.Schema(
       default:null,
       unique: true,
       trim: true,
+      sparse: true, 
       minLength: 3,
       maxLength: 30,
     }, 
@@ -52,6 +53,9 @@ const userSchema = new mongoose.Schema(
     },
     passwordResetExpires: {
       type: Date,
+    },
+    passwordChangedAt:{
+      type:Date,
     },
     role: {
       type: String,

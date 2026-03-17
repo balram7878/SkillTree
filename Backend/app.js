@@ -3,6 +3,7 @@ const express = require("express");
 const cors = require("cors");
 const cookieParser = require("cookie-parser");
 const connectDB = require("./config/db");
+const redisClient = require("./config/redis");
 const authRoutes = require("./routes/auth.routes");
 require("./jobs/cleanupUnverifiedUsers");
 
@@ -24,14 +25,18 @@ app.get("/health", (req, res) => {
 // Start server
 const PORT = process.env.PORT || 5000;
 
-connectDB()
-  .then(() => {
-    console.log("Connected to MongoDB");
+const initializeServer = async () => {
+  try {
+    await Promise.all([connectDB(), redisClient.connect()]);
+    console.log("Connected to MongoDB and Redis");
+
     app.listen(PORT, () => {
       console.log(`Server running on port ${PORT}`);
     });
-  })
-  .catch((err) => {
-    console.error("Failed to connect to MongoDB:", err);
+  } catch (error) {
+    console.error("Failed to start server:", error);
     process.exit(1);
-  });
+  }
+};
+
+initializeServer();
