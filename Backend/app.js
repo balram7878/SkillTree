@@ -4,15 +4,18 @@ const cors = require("cors");
 const cookieParser = require("cookie-parser");
 const connectDB = require("./config/db");
 const redisClient = require("./config/redis");
-const authRoutes = require("./routes/auth.routes");
+const authRoutes = require("./routes/auth.routes")
+const passport = require("./config/passport");;
 require("./jobs/cleanupUnverifiedUsers");
 
 const app = express();
 
 // Middleware
-app.use(cors({ origin: process.env.CLIENT_URL, credentials: true }));
+app.use(cors({ origin: process.env.FRONTEND_URL, credentials: true }));
 app.use(express.json());
 app.use(cookieParser());
+app.use(passport.initialize());
+
 
 // Routes
 app.use("/api/auth", authRoutes);

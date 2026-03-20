@@ -15,13 +15,13 @@ const userSchema = new mongoose.Schema(
     },
     username: {
       type: String,
-      default:null,
+      default: null,
       unique: true,
       trim: true,
-      sparse: true, 
+      sparse: true,
       minLength: 3,
       maxLength: 30,
-    }, 
+    },
     email: {
       type: String,
       required: true,
@@ -31,13 +31,24 @@ const userSchema = new mongoose.Schema(
     },
     passwordHash: {
       type: String,
-      required: true,
+      required: false,
+      default: null,
     },
     authProvider: {
       type: String,
-      enum: ["local", "google"],
+      enum: ["local", "google", "github"],
       default: "local",
     },
+
+    googleId: {
+      type: String,
+      sparse: true,
+    },
+    githubId: {
+      type: String,
+      sparse: true,
+    },
+
     isEmailVerified: {
       type: Boolean,
       default: false,
@@ -54,8 +65,8 @@ const userSchema = new mongoose.Schema(
     passwordResetExpires: {
       type: Date,
     },
-    passwordChangedAt:{
-      type:Date,
+    passwordChangedAt: {
+      type: Date,
     },
     role: {
       type: String,
@@ -66,7 +77,7 @@ const userSchema = new mongoose.Schema(
       type: Date,
     },
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
 userSchema.statics.generatePasswordHash = async function (password) {
@@ -74,6 +85,7 @@ userSchema.statics.generatePasswordHash = async function (password) {
 };
 
 userSchema.methods.comparePassword = async function (password) {
+  if (!this.passwordHash) return false;
   return bcrypt.compare(password, this.passwordHash);
 };
 

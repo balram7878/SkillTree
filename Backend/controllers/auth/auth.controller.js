@@ -112,6 +112,12 @@ const login = async (req, res) => {
       return res.status(401).json({ message: "Invalid email or password" });
     }
 
+    if (user.authProvider !== "local") {
+      return res.status(400).json({
+        message: `This account uses ${user.authProvider} login. Please continue with ${user.authProvider}.`,
+      });
+    }
+
     const isMatch = await user.comparePassword(password);
     if (!isMatch) {
       return res.status(401).json({ message: "Invalid email or password" });
@@ -243,6 +249,11 @@ const forgotPassword = async (req, res) => {
           "If an account with that email exists, a password reset link has been sent",
       });
     }
+    
+    return res.json({
+      message:
+        "This account uses social login. Password reset is not available.",
+    });
 
     const resetToken = generateToken();
     user.passwordResetToken = hashedToken(resetToken);
@@ -405,4 +416,5 @@ module.exports = {
   forgotPassword,
   resetPassword,
   getMe,
+  JWT_EXPIRY_SECONDS,
 };
