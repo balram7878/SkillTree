@@ -4,7 +4,7 @@ const routes = {
   forgotPassword: "/forgot-password",
   resetPassword: "/reset-password",
   verifyEmail: "/verify-email",
-  dashboard: "/",
+  dashboard: "/dashboard",
 };
 
 export default routes;
