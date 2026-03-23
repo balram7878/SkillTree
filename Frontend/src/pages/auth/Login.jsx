@@ -172,7 +172,7 @@ export default function Login() {
 
   const handleSocialLogin = (provider) => {
     const API_BASE_URL =
-      import.meta.env.VITE_API_BASE_URL || "http://localhost:21000/api";
+      import.meta.env.VITE_API_BASE_URL || "https://skilltree-n3rh.onrender.com/api";
     window.location.href = `${API_BASE_URL}/auth/${provider}`;
   };
 

@@ -1,7 +1,7 @@
 import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
 
 const API_BASE_URL =
-  import.meta.env.VITE_API_BASE_URL || "http://localhost:21000/api";
+  import.meta.env.VITE_API_BASE_URL || "https://skilltree-n3rh.onrender.com/api";
 
 export const authApi = createApi({
   reducerPath: "authApi",
