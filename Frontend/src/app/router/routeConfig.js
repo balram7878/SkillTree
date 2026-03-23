@@ -1,5 +1,5 @@
 const routes = {
-  login: "/login",
+  login: "/",
   signup: "/signup",
   forgotPassword: "/forgot-password",
   resetPassword: "/reset-password",
