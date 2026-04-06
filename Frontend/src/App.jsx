@@ -1,27 +1,20 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router";
 import { useSelector } from "react-redux";
+import { useNetworkStatus } from "./components/hooks/useNetworkStatus";
+import { useGetServerStatusQuery, useGetMeQuery } from "./store/authApi";
+import ErrorState from "./components/ui/ErrorState";
+import routeConfig from "./app/router/routeConfig";
 import Login from "./pages/auth/Login";
 import Signup from "./pages/auth/Signup";
+import Dashboard from "./pages/dashboard/Dashboard";
 import VerifyEmail from "./pages/auth/VerifyEmail";
 import ResetPassword from "./pages/auth/ResetPassword";
 import ForgetPassword from "./pages/auth/ForgetPassword";
-import Dashboard from "./pages/dashboard/Dashboard";
-import routeConfig from "./app/router/routeConfig";
-import { useGetMeQuery } from "./store/authApi";
+import LandingPage from "./pages/landing page/Landing";
 
-// Blocks unauthenticated users from private routes.
-// Waits for the initial getMe check to settle before rendering.
 function ProtectedRoute({ children }) {
   const { isAuthenticated, isInitialized } = useSelector((s) => s.auth);
-
-  if (!isInitialized) {
-    return (
-      <div className="min-h-screen bg-[#0d0f12] flex items-center justify-center">
-        <div className="w-8 h-8 border-2 border-emerald-500 border-t-transparent rounded-full animate-spin" />
-      </div>
-    );
-  }
-
+  if (!isInitialized) return <LandingPage />;
   return isAuthenticated ? (
     children
   ) : (
@@ -29,18 +22,9 @@ function ProtectedRoute({ children }) {
   );
 }
 
-// Redirects already-authenticated users away from auth pages.
 function PublicRoute({ children }) {
   const { isAuthenticated, isInitialized } = useSelector((s) => s.auth);
-
-  if (!isInitialized) {
-    return (
-      <div className="min-h-screen bg-[#0d0f12] flex items-center justify-center">
-        <div className="w-8 h-8 border-2 border-emerald-500 border-t-transparent rounded-full animate-spin" />
-      </div>
-    );
-  }
-
+  if (!isInitialized) return <LandingPage />;
   return isAuthenticated ? (
     <Navigate to={routeConfig.dashboard} replace />
   ) : (
@@ -48,10 +32,62 @@ function PublicRoute({ children }) {
   );
 }
 
+// function Spinner() {
+//   return (
+//     <div className="min-h-screen bg-[#0d0f12] flex items-center justify-center">
+//       <div className="w-8 h-8 border-2 border-emerald-500 border-t-transparent rounded-full animate-spin" />
+//     </div>
+//   );
+// }
+
 export default function App() {
-  // Runs on mount — resolves auth state via httpOnly cookie.
-  // authSlice extraReducers set isInitialized=true when this settles.
-  useGetMeQuery();
+  const isOnline = useNetworkStatus();
+  console.log("App render - isOnline:", isOnline);
+
+  // Health check — only runs when online. Polls every 30s.
+  const { isError: serverDown, refetch: retryHealth } = useGetServerStatusQuery(
+    undefined,
+    {
+      skip: !isOnline, // don't bother if already offline
+      pollingInterval: 30000, // re-check every 30s automatically
+    },
+  );
+
+  // Auth check — only runs when server is reachable
+  const {
+    isError: authTimedOut,
+    error: authError,
+    isFetching: authLoading,
+    refetch: retryAuth,
+  } = useGetMeQuery(undefined, {
+    skip: !isOnline || serverDown,
+  });
+
+  // --- Error priority: offline > server down > timeout ---
+  if (!isOnline) {
+    return (
+      <ErrorState
+        type="offline"
+        onRetry={() => {
+          // just re-render, the online event will fire naturally
+          // but you can force a re-check:
+          if (navigator.onLine) retryHealth();
+        }}
+      />
+    );
+  }
+
+  if (serverDown) {
+    return <ErrorState type="server" onRetry={retryHealth} />;
+  }
+
+  // timeout = getMe took too long / failed for non-auth reasons
+  // distinguish from 401 (which is normal "not logged in")
+  // authTimedOut here means network error, not 401
+  let isRealError = authTimedOut && authError?.status != 401;
+  if (isRealError) {
+    return <ErrorState type="timeout" onRetry={retryAuth} />;
+  }
 
   return (
     <Router>
@@ -72,7 +108,6 @@ export default function App() {
             </PublicRoute>
           }
         />
-        {/* verifyEmail is public — accessed from email links + waiting screen */}
         <Route path={routeConfig.verifyEmail} element={<VerifyEmail />} />
         <Route
           path={routeConfig.resetPassword}

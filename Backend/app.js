@@ -4,8 +4,8 @@ const cors = require("cors");
 const cookieParser = require("cookie-parser");
 const connectDB = require("./config/db");
 const redisClient = require("./config/redis");
-const authRoutes = require("./routes/auth.routes")
-const passport = require("./config/passport");;
+const authRoutes = require("./routes/auth.routes");
+const passport = require("./config/passport");
 require("./jobs/cleanupUnverifiedUsers");
 
 const app = express();
@@ -16,14 +16,15 @@ app.use(express.json());
 app.use(cookieParser());
 app.use(passport.initialize());
 
-
 // Routes
 app.use("/api/auth", authRoutes);
 
 // Health check
-app.get("/health", (req, res) => {
-  res.json({ status: "ok" });
+app.get("/api/health", (req, res) => {
+  res.status(200).json({ status: "ok" });
 });
+
+
 
 // Start server
 const PORT = process.env.PORT || 5000;

@@ -1,7 +1,8 @@
 import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
 
 const API_BASE_URL =
-  import.meta.env.VITE_API_BASE_URL || "https://skilltree-n3rh.onrender.com/api";
+  import.meta.env.VITE_API_BASE_URL ||
+  "https://skilltree-n3rh.onrender.com/api";
 
 export const authApi = createApi({
   reducerPath: "authApi",
@@ -74,8 +75,9 @@ export const authApi = createApi({
       }),
     }),
 
-
-    
+    getServerStatus: builder.query({
+      query: () => "/health",
+    }),
   }),
 });
 
@@ -88,4 +90,5 @@ export const {
   useResetPasswordMutation,
   useGetMeQuery,
   useLogoutMutation,
+  useGetServerStatusQuery
 } = authApi;
