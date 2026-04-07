@@ -2,11 +2,14 @@ import express from "express";
 import { pipeline } from "@xenova/transformers";
 import { searchPinecone } from "./config/pinecone.js";
 import { getEmbedder } from "./config/embedder.js";
+import cors from "cors";
+import "dotenv/config";
 
 async function startServer() {
   await getEmbedder();
   const app = express();
   app.use(express.json());
+  app.use(cors({ origin: "*"}));
 
   app.use("/api/skill", (await import("./routes/routes.js")).default);
 

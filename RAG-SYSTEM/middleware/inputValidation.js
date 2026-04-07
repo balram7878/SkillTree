@@ -1,4 +1,4 @@
-const VALID_SKILLS = ["web-development", "dsa"];
+const VALID_SKILLS = ["web-development", "aiml"];
 const VALID_LEVELS = ["beginner", "intermediate", "advanced"];
 
 export function validateQuestionsInput(req, res, next) {

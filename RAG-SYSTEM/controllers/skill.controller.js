@@ -104,7 +104,6 @@ Example format: ["Question 1?", "Question 2?", "Question 3?", "Question 4?", "Qu
   }
 };
 
-
 async function evaluateAnswers(req, res) {
   try {
     const { skill, domain, level, answers } = req.body;
@@ -144,7 +143,8 @@ No markdown, no explanation outside the JSON.`;
       messages: [
         {
           role: "system",
-          content: "You are a technical evaluator. Respond only with valid JSON arrays. No markdown, no extra text.",
+          content:
+            "You are a technical evaluator. Respond only with valid JSON arrays. No markdown, no extra text.",
         },
         { role: "user", content: prompt },
       ],
@@ -159,11 +159,16 @@ No markdown, no explanation outside the JSON.`;
       const cleaned = raw.replace(/```json|```/g, "").trim();
       evaluations = JSON.parse(cleaned);
 
-      if (!Array.isArray(evaluations) || evaluations.length !== answers.length) {
+      if (
+        !Array.isArray(evaluations) ||
+        evaluations.length !== answers.length
+      ) {
         throw new Error("Invalid shape");
       }
     } catch {
-      return res.status(500).json({ message: "LLM returned malformed response. Try again." });
+      return res
+        .status(500)
+        .json({ message: "LLM returned malformed response. Try again." });
     }
 
     // ── Overall summary ──────────────────────────────────────
@@ -185,7 +190,6 @@ No markdown, no explanation outside the JSON.`;
         topGaps: allGaps.slice(0, 5), // top 5 unique gaps across all answers
       },
     });
-
   } catch (error) {
     console.error("Error in evaluateAnswers:", error.message);
     res.status(500).json({ message: "Internal server error." });
