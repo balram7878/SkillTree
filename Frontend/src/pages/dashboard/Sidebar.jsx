@@ -13,7 +13,7 @@ export default function Sidebar() {
 
   return (
     <>
-      <aside className="w-64 bg-white border-r border-[#E8DDD0] hidden md:flex flex-col py-6 shrink-0 z-10">
+      <aside className="w-64 bg-white border-r border-[#E8DDD0] hidden md:flex flex-col py-6 shrink-0 z-10 max-h-screen">
         <nav className="flex-1 space-y-2 px-4">
           <button className="w-full flex items-center gap-3 px-4 py-3 text-left rounded-xl bg-[#F5F0EB] text-[#F97316] font-bold shadow-sm transition-all hover:opacity-90">
             <LayoutDashboard className="w-5 h-5 flex-shrink-0" />

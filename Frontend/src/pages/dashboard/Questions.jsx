@@ -100,7 +100,7 @@ export default function Questions({
                         error={errors?.answer?.message}
                         {...register(`answers.${q.id}`)}
                         readOnly={step === "submitting"}
-                        className="textarea textarea-neutral w-full min-h-[160px] bg-[#FAFAF8] border border-[#E8DDD0] rounded-[8px] p-5 text-[#1C1C1C] resize-y focus:outline-none focus:ring-2 focus:ring-[#F97316] focus:bg-white transition-colors"
+                        className="textarea textarea-neutral  border border-[#E8DDD0] rounded-[8px] p-5 w-full bg-[#FAFAF8] resize-y focus:outline-none focus:ring-2 focus:ring-[#000] focus:bg-white transition-colors font-sans text-base font-medium"
                         maxLength={2000}
                       />
                       <div className="text-right text-xs font-medium text-[#6B6B6B] mt-2">

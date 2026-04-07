@@ -108,7 +108,7 @@ export default function Main({
           {(step === "idle" || step === "loading") && (
             <div className="animate-in fade-in slide-in-from-bottom-2 duration-500">
               <h1 className="text-4xl font-black mb-2">
-                Good morning, {user?.name ? user.name.split(" ")[0] : "Learner"}!
+                Hello, {user?.name ? user.name.split(" ")[0] : "Learner"}!
               </h1>
               <p className="text-xl text-[#6B6B6B] mb-8">
                 Ready to verify your skills today?

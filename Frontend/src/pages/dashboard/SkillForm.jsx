@@ -38,7 +38,7 @@ export default function SkillForm({ step, onSubmit }) {
                   error={errors.skill?.message}
                   {...register("skill")}
                   disabled={step === "loading"}
-                  className="select select-ghost rounded-md border border-[#E8DDD0] focus:outline-none focus:ring-2 focus:ring-[#F97316]"
+                  className="select select-ghost rounded-md border border-[#E8DDD0] focus:outline-none focus:ring-2 focus:ring-[#000] font-sans text-base font-medium"
                 >
                   <option>Web Development</option>
                   <option>AIML</option>
@@ -59,7 +59,7 @@ export default function SkillForm({ step, onSubmit }) {
                 error={errors.domain?.message}
                 {...register("domain")}
                 disabled={step === "loading"}
-                className="input input-neutral w-full bg-[#FAFAF8] rounded-md border border-[#E8DDD0] focus:outline-none focus:ring-2 focus:ring-[#F97316]"
+                className="input input-neutral w-full bg-[#FAFAF8] rounded-md border border-[#E8DDD0] focus:outline-none focus:ring-2 focus:ring-[#000] text-base font-medium font-sans"
               />
               {errors.domain && toast.error(errors.domain.message)}
             </div>
@@ -72,7 +72,7 @@ export default function SkillForm({ step, onSubmit }) {
                   error={errors.level?.message}
                   {...register("level")}
                   disabled={step === "loading"}
-                  className="select select-ghost rounded-md  border border-[#E8DDD0]  focus:outline-none focus:ring-2 focus:ring-[#F97316] "
+                  className="select select-ghost rounded-md  border border-[#E8DDD0]  focus:outline-none focus:ring-2 focus:ring-[#000] font-sans text-base font-medium"
                 >
                   <option>Beginner</option>
                   <option>Intermediate</option>
