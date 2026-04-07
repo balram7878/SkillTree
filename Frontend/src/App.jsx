@@ -14,7 +14,10 @@ import LandingPage from "./pages/landing page/Landing";
 
 function ProtectedRoute({ children }) {
   const { isAuthenticated, isInitialized } = useSelector((s) => s.auth);
-  if (!isInitialized) return <LandingPage />;
+  if (!isInitialized) {
+    return <div className="min-h-screen bg-[#0d0f12]" />;
+  }
+
   return isAuthenticated ? (
     children
   ) : (
@@ -24,12 +27,10 @@ function ProtectedRoute({ children }) {
 
 function PublicRoute({ children }) {
   const { isAuthenticated, isInitialized } = useSelector((s) => s.auth);
-  if (!isInitialized) return <LandingPage />;
-  return isAuthenticated ? (
-    <Navigate to={routeConfig.dashboard} replace />
-  ) : (
-    children
-  );
+  if (isInitialized && isAuthenticated) {
+    return <Navigate to={routeConfig.dashboard} replace />;
+  }
+  return children;
 }
 
 // function Spinner() {
@@ -108,6 +109,14 @@ export default function App() {
             </PublicRoute>
           }
         />
+        <Route
+          path={routeConfig.dashboard}
+          element={
+            <PublicRoute>
+              <LandingPage />
+            </PublicRoute>
+          }
+        />
         <Route path={routeConfig.verifyEmail} element={<VerifyEmail />} />
         <Route
           path={routeConfig.resetPassword}
@@ -123,14 +132,6 @@ export default function App() {
             <PublicRoute>
               <ForgetPassword />
             </PublicRoute>
-          }
-        />
-        <Route
-          path={routeConfig.dashboard}
-          element={
-            <ProtectedRoute>
-              <Dashboard />
-            </ProtectedRoute>
           }
         />
       </Routes>
