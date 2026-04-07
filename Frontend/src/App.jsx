@@ -15,7 +15,7 @@ import LandingPage from "./pages/landing page/Landing";
 function ProtectedRoute({ children }) {
   const { isAuthenticated, isInitialized } = useSelector((s) => s.auth);
   if (!isInitialized) {
-    return <div className="min-h-screen bg-[#0d0f12]" />;
+    return <div className="min-h-screen bg-[#000]" />;
   }
 
   return isAuthenticated ? (
@@ -33,17 +33,8 @@ function PublicRoute({ children }) {
   return children;
 }
 
-// function Spinner() {
-//   return (
-//     <div className="min-h-screen bg-[#0d0f12] flex items-center justify-center">
-//       <div className="w-8 h-8 border-2 border-emerald-500 border-t-transparent rounded-full animate-spin" />
-//     </div>
-//   );
-// }
-
 export default function App() {
   const isOnline = useNetworkStatus();
-  console.log("App render - isOnline:", isOnline);
 
   // Health check — only runs when online. Polls every 30s.
   const { isError: serverDown, refetch: retryHealth } = useGetServerStatusQuery(
@@ -110,7 +101,7 @@ export default function App() {
           }
         />
         <Route
-          path={routeConfig.dashboard}
+          path={routeConfig.landingPage}
           element={
             <PublicRoute>
               <LandingPage />
@@ -134,6 +125,14 @@ export default function App() {
             </PublicRoute>
           }
         />
+        <Route
+          path={routeConfig.dashboard}
+          element={
+            <ProtectedRoute>
+              <Dashboard />
+            </ProtectedRoute>
+          }
+        ></Route>
       </Routes>
     </Router>
   );

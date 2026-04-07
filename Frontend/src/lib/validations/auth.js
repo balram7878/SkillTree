@@ -11,7 +11,7 @@ const nameSchema = z
   .transform((val) => val.trim().replace(/\s+/g, " "))
   .refine(
     (val) => NAME_REGEX.test(val),
-    "Name can only include letters, spaces, apostrophes, and hyphens"
+    "Name can only include letters, spaces, apostrophes, and hyphens",
   );
 
 const emailSchema = z
@@ -65,3 +65,5 @@ export const resetPasswordSchema = z
     message: "Passwords do not match",
     path: ["confirmPassword"],
   });
+
+
