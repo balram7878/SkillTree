@@ -3,6 +3,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { answerSchema } from "../../lib/validations/skill";
 import { useEffect } from "react";
+import toast from "react-hot-toast";
 
 export default function Questions({
   step,
@@ -53,6 +54,15 @@ export default function Questions({
     setAnswers(watchedAnswers || {});
   }, [JSON.stringify(watchedAnswers)]);
 
+  const handlePaste = (e) => {
+    e.preventDefault();
+    toast.error("Paste is disabled. Answer in your own words.");
+  };
+
+  const handleCopy = (e) => {
+    e.preventDefault();
+  };
+
   return (
     <>
       <form onSubmit={handleSubmit(onSubmit)}>
@@ -83,11 +93,12 @@ export default function Questions({
           <div className="space-y-8">
             {questions.map((q, index) => (
               <div
-                key={q.id}
-                className="bg-white p-8 rounded-[16px] border border-[#E8DDD0] shadow-sm"
+                key={q.id} 
+                onContextMenu={(e) => e.preventDefault()}
+                className="bg-white p-8 rounded-[16px] border border-[#E8DDD0] shadow-sm select-none"
               >
                 <div className="flex gap-4">
-                  <div className="w-10 h-10 shrink-0 bg-[#F5F0EB] text-[#F97316] font-black rounded-full flex items-center justify-center border border-[#F97316]/20">
+                  <div className="w-10 h-10  shrink-0 bg-[#F5F0EB] text-[#F97316] font-black rounded-full flex items-center justify-center border border-[#F97316]/20">
                     Q{index + 1}
                   </div>
                   <div className="flex-1">
@@ -96,11 +107,14 @@ export default function Questions({
                     </p>
                     <div className="relative">
                       <textarea
+                        onPaste={handlePaste}
+                        onCopy={handleCopy}
+                        onCut={handleCopy}
                         placeholder="Write your answer here... be specific and explain your reasoning."
                         error={errors?.answer?.message}
                         {...register(`answers.${q.id}`)}
                         readOnly={step === "submitting"}
-                        className="textarea textarea-neutral  border border-[#E8DDD0] rounded-[8px] p-5 w-full bg-[#FAFAF8] resize-y focus:outline-none focus:ring-2 focus:ring-[#000] focus:bg-white transition-colors font-sans text-base font-medium"
+                        className="textarea textarea-neutral  border border-[#E8DDD0] rounded-[8px] p-5 w-full bg-[#FAFAF8] resize-y select-none focus:outline-none focus:ring-2 focus:ring-[#000] focus:bg-white transition-colors font-sans text-base font-medium"
                         maxLength={2000}
                       />
                       <div className="text-right text-xs font-medium text-[#6B6B6B] mt-2">

@@ -5,7 +5,9 @@ const cookieParser = require("cookie-parser");
 const connectDB = require("./config/db");
 const redisClient = require("./config/redis");
 const authRoutes = require("./routes/auth.routes");
+const adminRoutes = require("./routes/admin.routes");
 const passport = require("./config/passport");
+const logger = require("./utils/logger");
 require("./jobs/cleanupUnverifiedUsers");
 
 const app = express();
@@ -18,13 +20,12 @@ app.use(passport.initialize());
 
 // Routes
 app.use("/api/auth", authRoutes);
+app.use("/api/admin",adminRoutes)
 
 // Health check
 app.get("/api/health", (req, res) => {
   res.status(200).json({ status: "ok" });
 });
-
-
 
 // Start server
 const PORT = process.env.PORT || 5000;
@@ -32,13 +33,23 @@ const PORT = process.env.PORT || 5000;
 const initializeServer = async () => {
   try {
     await Promise.all([connectDB(), redisClient.connect()]);
-    console.log("Connected to MongoDB and Redis");
+    logger.info("SERVER_INFO", {
+      action: "Connected to MongoDB and Redis",
+      timestamp: new Date().toISOString(),
+    });
 
     app.listen(PORT, () => {
-      console.log(`Server running on port ${PORT}`);
+      logger.info("SERVER_INFO", {
+        action: `Server running on port ${PORT}`,
+        timestamp: new Date().toISOString(),
+      });
     });
   } catch (error) {
-    console.error("Failed to start server:", error);
+    logger.error("SERVER_ERROR", {
+      action: "Failed to connect to MongoDB or Redis",
+      error: error.message,
+      timestamp: new Date().toISOString(),
+    });
     process.exit(1);
   }
 };

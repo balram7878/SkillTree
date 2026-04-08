@@ -12,6 +12,7 @@ const {
   validatePassword,
 } = require("../../validators/validators");
 const redisClient = require("../../config/redis");
+const logger = require("../../utils/logger");
 
 const generateToken = () => crypto.randomBytes(32).toString("hex");
 
@@ -20,8 +21,8 @@ const hashedToken = (token) =>
 
 const JWT_EXPIRY_SECONDS = 24 * 60 * 60; // 1 day in seconds
 
-const generateJWT = (userId) => {
-  return jwt.sign({ id: userId }, process.env.JWT_SECRET, {
+const generateJWT = (payload) => {
+  return jwt.sign(payload, process.env.JWT_SECRET, {
     expiresIn: JWT_EXPIRY_SECONDS,
   });
 };
@@ -74,6 +75,15 @@ const signup = async (req, res) => {
 
     await sendVerificationEmail(user.email, emailVerificationToken);
 
+    logger.info("USER_SIGNUP", {
+      action: "SIGNUP_SUCCESS",
+      userId: user._id.toString(),
+      email: user.email,
+      ip: req.ip,
+      userAgent: req.headers["user-agent"],
+      timestamp: new Date().toISOString(),
+    });
+
     res.status(201).json({
       message:
         "Account created successfully. Please check your email to verify your account.",
@@ -84,7 +94,12 @@ const signup = async (req, res) => {
       },
     });
   } catch (err) {
-    console.error("Signup error:", err);
+    logger.error("SERVER_ERROR", {
+      action: "SIGNUP_ERROR",
+      error: err.message,
+      ip: req.ip,
+      timestamp: new Date().toISOString(),
+    });
     res.status(500).json({ message: "Internal server error" });
   }
 };
@@ -109,6 +124,13 @@ const login = async (req, res) => {
 
     if (!user) {
       await bcrypt.compare(password, "$2b$10$dummyhashfortimingprotection");
+      logger.info("AUTH_EVENT", {
+        action: "LOGIN_FAILED",
+        reason: "User not found",
+        email: emailValidation.normalized,
+        ip: req.ip,
+        timestamp: new Date().toISOString(),
+      });
       return res.status(401).json({ message: "Invalid email or password" });
     }
 
@@ -120,6 +142,14 @@ const login = async (req, res) => {
 
     const isMatch = await user.comparePassword(password);
     if (!isMatch) {
+      logger.info("AUTH_EVENT", {
+        action: "LOGIN_FAILED",
+        reason: "Wrong password",
+        userId: user._id.toString(),
+        email: user.email,
+        ip: req.ip,
+        timestamp: new Date().toISOString(),
+      });
       return res.status(401).json({ message: "Invalid email or password" });
     }
 
@@ -144,7 +174,17 @@ const login = async (req, res) => {
     //   });
     // }
 
-    const token = generateJWT(user._id);
+    const token = generateJWT({userId: user._id,role: user.role });
+
+    logger.info("USER_LOGIN", {
+      action: "LOGIN_SUCCESS",
+      userId: user._id.toString(),
+      email: user.email,
+      role: user.role,
+      ip: req.ip,
+      userAgent: req.headers["user-agent"],
+      timestamp: new Date().toISOString(),
+    });
 
     res.cookie("token", token, {
       httpOnly: true,
@@ -165,7 +205,12 @@ const login = async (req, res) => {
       },
     });
   } catch (err) {
-    console.error("Login error:", err);
+    logger.error("SERVER_ERROR", {
+      action: "LOGIN_ERROR",
+      error: err.message,
+      ip: req.ip,
+      timestamp: new Date().toISOString(),
+    });
     res.status(500).json({ message: "Internal server error" });
   }
 };
@@ -201,8 +246,16 @@ const verifyEmail = async (req, res) => {
     user.emailVerificationExpires = undefined;
     await user.save();
 
+    logger.info("AUTH_EVENT", {
+      action: "EMAIL_VERIFIED",
+      userId: user._id.toString(),
+      email: user.email,
+      ip: req.ip,
+      timestamp: new Date().toISOString(),
+    });
+
     // Auto-login after successful email verification
-    const jwtToken = generateJWT(user._id);
+    const jwtToken = generateJWT({userId: user._id, role: user.role });
     res.cookie("token", jwtToken, {
       httpOnly: true,
       sameSite: "lax",
@@ -222,7 +275,12 @@ const verifyEmail = async (req, res) => {
       },
     });
   } catch (err) {
-    console.error("Email verification error:", err);
+    logger.error("SERVER_ERROR", {
+      action: "EMAIL_VERIFICATION_ERROR",
+      error: err.message,
+      ip: req.ip,
+      timestamp: new Date().toISOString(),
+    });
     res.status(500).json({ message: "Internal server error" });
   }
 };
@@ -263,12 +321,25 @@ const forgotPassword = async (req, res) => {
     await user.save();
     await sendPasswordResetEmail(user.email, resetToken);
 
+    logger.info("AUTH_EVENT", {
+      action: "PASSWORD_RESET_LINK_SENT",
+      userId: user._id.toString(),
+      email: user.email,
+      ip: req.ip,
+      timestamp: new Date().toISOString(),
+    });
+
     res.json({
       message:
         "If an account with that email exists, a password reset link has been sent",
     });
   } catch (err) {
-    console.error("Forgot password error:", err);
+    logger.error("SERVER_ERROR", {
+      action: "FORGOT_PASSWORD_ERROR",
+      error: err.message,
+      ip: req.ip,
+      timestamp: new Date().toISOString(),
+    });
     res.status(500).json({ message: "Internal server error" });
   }
 };
@@ -305,9 +376,22 @@ const resetPassword = async (req, res) => {
     user.passwordChangedAt = Date.now();
     await user.save();
 
+    logger.info("AUTH_EVENT", {
+      action: "PASSWORD_RESET_SUCCESS",
+      userId: user._id.toString(),
+      email: user.email,
+      ip: req.ip,
+      timestamp: new Date().toISOString(),
+    });
+
     res.json({ message: "Password reset successfully" });
   } catch (err) {
-    console.error("Reset password error:", err);
+    logger.error("SERVER_ERROR", {
+      action: "RESET_PASSWORD_ERROR",
+      error: err.message,
+      ip: req.ip,
+      timestamp: new Date().toISOString(),
+    });
     res.status(500).json({ message: "Internal server error" });
   }
 };
@@ -315,7 +399,7 @@ const resetPassword = async (req, res) => {
 // GET /api/auth/me
 const getMe = async (req, res) => {
   try {
-    const user = await User.findById(req.user.id);
+    const user = await User.findById(req?.user?.userId);
 
     if (!user) {
       return res.status(404).json({ message: "User not found" });
@@ -336,7 +420,13 @@ const getMe = async (req, res) => {
       },
     });
   } catch (err) {
-    console.error("Get me error:", err);
+    logger.error("SERVER_ERROR", {
+      action: "GET_ME_ERROR",
+      error: err.message,
+      userId: req.user?.userId,
+      ip: req.ip,
+      timestamp: new Date().toISOString(),
+    });
     res.status(500).json({ message: "Internal server error" });
   }
 };
@@ -374,12 +464,25 @@ const resendVerification = async (req, res) => {
 
     await sendVerificationEmail(user.email, emailVerificationToken);
 
+    logger.info("AUTH_EVENT", {
+      action: "VERIFICATION_EMAIL_RESENT",
+      userId: user._id.toString(),
+      email: user.email,
+      ip: req.ip,
+      timestamp: new Date().toISOString(),
+    });
+
     res.json({
       message:
         "If your email is registered and unverified, a verification email has been sent.",
     });
   } catch (err) {
-    console.error("Resend verification error:", err);
+    logger.error("SERVER_ERROR", {
+      action: "RESEND_VERIFICATION_ERROR",
+      error: err.message,
+      ip: req.ip,
+      timestamp: new Date().toISOString(),
+    });
     res.status(500).json({ message: "Internal server error" });
   }
 };
@@ -402,9 +505,22 @@ const logout = async (req, res) => {
       sameSite: "lax",
     });
 
+    logger.info("AUTH_EVENT", {
+      action: "LOGOUT_SUCCESS",
+      userId: req.user?.userId,
+      ip: req.ip,
+      timestamp: new Date().toISOString(),
+    });
+
     res.json({ message: "Logged out successfully" });
   } catch (err) {
-    console.error("Logout error:", err);
+    logger.error("SERVER_ERROR", {
+      action: "LOGOUT_ERROR",
+      error: err.message,
+      userId: req.user?.userId,
+      ip: req.ip,
+      timestamp: new Date().toISOString(),
+    });
     res.status(500).json({ message: "Logout failed" });
   }
 };

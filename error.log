@@ -1,0 +1,2 @@
+{"level":"warn","message":"LOGIN_FAILED","action":"LOGIN_FAILED","reason":"Wrong password","userId":"abc123","email":"balram@test.com","ip":"::1","timestamp":"2024-04-08T10:30:00Z"}
+{"level":"info","message":"USER_LOGIN","action":"LOGIN_SUCCESS","userId":"abc123","email":"balram@test.com","role":"user","ip":"::1","timestamp":"2024-04-08T10:31:00Z"}
