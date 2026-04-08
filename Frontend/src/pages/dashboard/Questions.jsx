@@ -93,7 +93,7 @@ export default function Questions({
           <div className="space-y-8">
             {questions.map((q, index) => (
               <div
-                key={q.id} 
+                key={q.id}
                 onContextMenu={(e) => e.preventDefault()}
                 className="bg-white p-8 rounded-[16px] border border-[#E8DDD0] shadow-sm select-none"
               >
@@ -111,7 +111,7 @@ export default function Questions({
                         onCopy={handleCopy}
                         onCut={handleCopy}
                         placeholder="Write your answer here... be specific and explain your reasoning."
-                        error={errors?.answer?.message}
+                        error={errors?.answers?.[q.id]?.message}
                         {...register(`answers.${q.id}`)}
                         readOnly={step === "submitting"}
                         className="textarea textarea-neutral  border border-[#E8DDD0] rounded-[8px] p-5 w-full bg-[#FAFAF8] resize-y select-none focus:outline-none focus:ring-2 focus:ring-[#000] focus:bg-white transition-colors font-sans text-base font-medium"
